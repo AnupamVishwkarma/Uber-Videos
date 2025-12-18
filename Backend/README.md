@@ -1,3 +1,69 @@
+# Users API - /users/register
+
+POST /users/register
+
+Description
+- Registers a new user and returns an auth token.
+
+Request
+- Content-Type: application/json
+- Body JSON schema:
+
+```json
+{
+  "fullname": {
+    "firstname": "string",
+    "lastname": "string"
+  },
+  "email": "string",
+  "password": "string"
+}
+```
+
+Required fields & validation
+- `fullname.firstname`: string, required, minimum 3 characters
+- `fullname.lastname`: string, required, minimum 3 characters
+- `email`: string, required, must be a valid email
+- `password`: string, required, minimum 6 characters
+
+Responses
+- 201 Created: user successfully created
+  - Body: `{ user, token }` (the `user` object excludes the password; `token` is a JWT)
+- 400 Bad Request: validation errors
+  - Body: `{ errors: [ ... ] }` (array of validation error objects from express-validator)
+- 500 Internal Server Error: unexpected server error
+
+Examples
+
+Curl example:
+
+```bash
+curl -X POST http://localhost:3000/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fullname": { "firstname": "Jane", "lastname": "Doe" },
+    "email": "jane.doe@example.com",
+    "password": "s3cret123"
+  }'
+```
+
+Successful response (201):
+
+```json
+{
+  "user": {
+    "_id": "<id>",
+    "fullname": { "firstname": "Jane", "lastname": "Doe" },
+    "email": "jane.doe@example.com",
+    "socketId": ""
+  },
+  "token": "<jwt-token>"
+}
+```
+
+Notes
+- Password is hashed before saving; the returned `user` does not include the password.
+- Token expiration: 1 hour (JWT configured in the model).
 # Users API — /users/register 🔐
 
 ## Description
