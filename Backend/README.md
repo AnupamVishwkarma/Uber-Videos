@@ -181,3 +181,69 @@ curl -X POST http://localhost:3000/users/register \
 ---
 
 If you'd like, I can also add a unit/integration test or update the route validators to include `lastname` validation. ✨
+
+---
+
+# Users API - /users/login
+
+POST /users/login
+
+Description
+- Authenticate a user and return an auth token.
+
+Request
+- Content-Type: application/json
+- Body JSON schema:
+
+```json
+{
+  "email": "string",
+  "password": "string"
+}
+```
+
+Required fields & validation
+- `email`: string, required, must be a valid email
+- `password`: string, required, minimum 6 characters
+
+Responses
+- 200 OK: authentication successful
+  - Body: `{ user, token }` (the `user` object excludes password)
+- 400 Bad Request: validation errors
+  - Body: `{ errors: [ ... ] }`
+- 401 Unauthorized: invalid credentials (user not found or wrong password)
+  - Body: `{ message: "Authentication failed. ..." }`
+- 500 Internal Server Error: unexpected server error
+
+Examples
+
+Curl example:
+
+```bash
+curl -X POST http://localhost:3000/users/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "jane.doe@example.com",
+    "password": "s3cret123"
+  }'
+```
+
+Successful response (200):
+
+```json
+{
+  "user": {
+    "_id": "<id>",
+    "fullname": { "firstname": "Jane", "lastname": "Doe" },
+    "email": "jane.doe@example.com",
+    "socketId": ""
+  },
+  "token": "<jwt-token>"
+}
+```
+
+Notes
+- The route loads the user with `select('+password')` then calls the instance method `comparePassword(password)` to verify credentials.
+- Passwords are hashed in storage and never returned to clients.
+- Token expiration: 1 hour (JWT configured in the model).
+
