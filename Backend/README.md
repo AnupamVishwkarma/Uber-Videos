@@ -247,3 +247,75 @@ Notes
 - Passwords are hashed in storage and never returned to clients.
 - Token expiration: 1 hour (JWT configured in the model).
 
+# Users API - /users/profile
+
+GET /users/profile
+
+Description
+- Returns the authenticated user's profile.
+
+Request
+- Requires authentication via cookie `token` or `Authorization: Bearer <token>` header.
+- No request body.
+
+Responses
+- 200 OK: authentication successful
+  - Body: `{ user }` (the `user` object excludes the password)
+- 401 Unauthorized: missing, invalid or revoked token
+  - Body: `{ message: "Access denied. No token provided." }` or `{ message: "Token has been revoked. Please log in again." }` or `{ message: "Invalid token." }`
+- 500 Internal Server Error: unexpected server error
+
+Examples
+
+Curl example:
+
+```bash
+curl -X GET http://localhost:3000/users/profile \
+  -H "Authorization: Bearer <jwt-token>"
+```
+
+Successful response (200):
+
+```json
+{
+  "user": {
+    "_id": "<id>",
+    "fullname": { "firstname": "Jane", "lastname": "Doe" },
+    "email": "jane.doe@example.com",
+    "socketId": ""
+  }
+}
+```
+
+Notes
+- This endpoint is protected by `auth.middleware` which verifies the JWT and checks a `BlacklistToken` collection to ensure the token hasn't been revoked.
+
+# Users API - /users/logout
+
+GET /users/logout
+
+Description
+- Logs the user out by clearing the auth cookie and adding the current token to a blacklist so it cannot be reused until it naturally expires.
+
+Request
+- Authentication via cookie `token` or `Authorization: Bearer <token>` header is expected.
+
+Responses
+- 200 OK: successfully logged out
+  - Body: `{ message: "Logged out successfully" }`
+- 401 Unauthorized: missing or already revoked token
+  - Body: `{ message: "Access denied. No token provided." }` or `{ message: "Token has been revoked. Please log in again." }`
+- 500 Internal Server Error: failed to revoke token or clear cookie
+
+Examples
+
+Curl example:
+
+```bash
+curl -X GET http://localhost:3000/users/logout \
+  -H "Authorization: Bearer <jwt-token>"
+```
+
+Notes
+- The server clears the `token` cookie and persists the token in `BlacklistToken` with a TTL so it will be ignored for its remaining lifetime.
+
